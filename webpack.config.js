@@ -10,13 +10,29 @@ module.exports = () => {
             path: path.resolve(__dirname, 'dist'),
             filename: 'main.js',
         },
-        plugins: [new HtmlWebpackPlugin({ template: './src/static/index.html' })],
+        module: {
+            rules: [
+                {
+                    test: /\.s[ac]ss$/i,
+                    use: [
+                        // Creates `style` nodes from JS strings
+                        "style-loader",
+                        // Translates CSS into CommonJS
+                        "css-loader",
+                        // Compiles Sass to CSS
+                        "sass-loader",
+                    ],
+                },
+                {
+                    test: /\.glsl$/,
+                    loader: 'raw-loader'
+                }
+            ]
+        },
+        plugins: [new HtmlWebpackPlugin({ template: './public/index.html' })],
         devServer: {
-            static: {
-                directory: path.join(__dirname, 'src/static'),
-            },
             compress: true,
             port: 3000,
-        },
+        }
     }
 }

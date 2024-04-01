@@ -1,0 +1,36 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <title>Document</title>
+</head>
+<body>
+    <div class="ui">
+        <div class="movement">
+            <div class="field-group">
+                <label for="pos-x">x</label>
+                <input step="10" value="0" type="number" id="pos-x" min="0" max="600">
+            </div>
+            <div class="field-group">
+                <label for="pos-y">y</label>
+                <input step="10" value="0" type="number" id="pos-y" min="0" max="600">
+            </div>
+            <div class="field-group">
+                <label for="angle">angle</label>
+                <input step="10" value="0" type="number" id="angle" min="0" max="360">
+            </div>
+            <div class="field-group">
+                <label for="scale-x">scale x</label>
+                <input value="1" type="number" id="scale-x" min="-50" max="50">
+            </div>
+            <div class="field-group">
+                <label for="scale-y">scale y</label>
+                <input value="1" type="number" id="scale-y" min="-50" max="50">
+            </div>
+        </div>
+    </div>
+    <canvas id="glcanvas" width="600" height="600">
+        Your browser not support canvas element
+    </canvas>
+</body>
+</html>
