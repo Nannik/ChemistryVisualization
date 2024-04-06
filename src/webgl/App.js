@@ -3,7 +3,7 @@ import vertShGl from "../glsl/vertSh.glsl";
 import fragShGl from "../glsl/fragSh.glsl";
 import {createProgram} from "./createProgram";
 import {initBuffers} from "./initBuffers";
-import {m3} from "./utils/m3";
+import {m4} from "./utils/m4";
 
 export class App {
     constructor(gl) {
@@ -13,15 +13,21 @@ export class App {
 
         this.translation = {
             x: 0,
-            y: 0
+            y: 0,
+            z: 0
         }
 
         this.scale = {
             x: 1,
-            y: 1
+            y: 1,
+            z: 1
         }
 
-        this.angle = 0
+        this.angle = {
+            x: 0,
+            y: 0,
+            z: 0
+        }
 
         this.vertSh = createShader(gl, gl.VERTEX_SHADER, vertShGl);
         let fragSh = createShader(gl, gl.FRAGMENT_SHADER, fragShGl);
@@ -45,19 +51,19 @@ export class App {
 
         this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
 
-        this.gl.clearColor(0, 1, 0, 0);
+        this.gl.clearColor(0, 0, 0, 0);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT);
 
         this.gl.uniform2f(this.locations.resolution, this.gl.canvas.width, this.gl.canvas.height);
 
-        this.setAttr(2, this.locations.position, this.buffers.position)
+        this.setAttr(3, this.locations.position, this.buffers.position)
         this.setAttr(4, this.locations.color, this.buffers.color)
 
         this.setMatrix()
 
-        let primitiveType = this.gl.TRIANGLE_FAN;
+        let primitiveType = this.gl.TRIANGLES;
         let offset = 0;
-        let count = 4;
+        let count = 16 * 6;
 
         this.gl.drawArrays(primitiveType, offset, count);
         this.ext.getTranslatedShaderSource(this.vertSh)
@@ -75,31 +81,46 @@ export class App {
     }
 
     setMatrix() {
-        let translationMatrix = m3.translation(this.translation.x, this.translation.y);
-        let rotationMatrix = m3.rotation(this.angle);
-        let scaleMatrix = m3.scaling(this.scale.x, this.scale.y);
+        let matrix = m4.identity()
+        matrix = m4.translate(matrix, this.translation.x, this.translation.y, this.translation.z);
+        matrix = m4.xRotate(matrix, this.angle.x)
+        matrix = m4.yRotate(matrix, this.angle.y)
+        matrix = m4.zRotate(matrix, this.angle.z)
+        matrix = m4.scale(matrix, this.scale.x, this.scale.y, this.scale.z)
 
-        let matrix = m3.multiply(translationMatrix, rotationMatrix);
-        matrix = m3.multiply(matrix, scaleMatrix);
+        console.log('%cmatrix', 'color: #bada55')
+        for (let i = 0; i < matrix.length; i += 4) {
+            let row = ''
+            for (let j = i; j < matrix.length && j < i + 4; j++) {
+                row += matrix[j].toFixed(3) + ' '
+            }
 
-        this.gl.uniformMatrix3fv(this.locations.matrix, false, matrix);
+            console.log(row)
+        }
+        this.gl.uniformMatrix4fv(this.locations.matrix, false, matrix);
     }
 
-    setTranslation({x, y}) {
+    setTranslation({x, y, z}) {
         this.translation = {
             x: x ?? this.translation.x,
-            y: y ?? this.translation.y
+            y: y ?? this.translation.y,
+            z: z ?? this.translation.z
         }
     }
 
-    setScale({x, y}) {
+    setScale({x, y, z}) {
         this.scale = {
             x: x ?? this.scale.x,
-            y: y ?? this.scale.y
+            y: y ?? this.scale.y,
+            z: z ?? this.scale.z
         }
     }
 
-    setAngle(rad) {
-        this.angle = rad
+    setAngle({x, y, z}) {
+        this.angle = {
+            x: x ?? this.angle.x,
+            y: y ?? this.angle.y,
+            z: z ?? this.angle.z
+        }
     }
 }

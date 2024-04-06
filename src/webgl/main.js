@@ -5,9 +5,13 @@ export function main(gl) {
 
     const posXInput = document.getElementById('pos-x')
     const posYInput = document.getElementById('pos-y')
+    const posZInput = document.getElementById('pos-z')
     const scaleXInput = document.getElementById('scale-x')
     const scaleYInput = document.getElementById('scale-y')
-    const angleInput = document.getElementById('angle')
+    const scaleZInput = document.getElementById('scale-z')
+    const angleXInput = document.getElementById('angle-x')
+    const angleYInput = document.getElementById('angle-y')
+    const angleZInput = document.getElementById('angle-z')
 
     posXInput.addEventListener('input', (e) => {
         const value = e.target.value
@@ -18,6 +22,12 @@ export function main(gl) {
     posYInput.addEventListener('input', (e) => {
         const value = e.target.value
         app.setTranslation({ y: value })
+        app.draw()
+    })
+
+    posZInput.addEventListener('input', (e) => {
+        const value = e.target.value
+        app.setTranslation({ z: value })
         app.draw()
     })
 
@@ -33,9 +43,27 @@ export function main(gl) {
         app.draw()
     })
 
-    angleInput.addEventListener('input', (e) => {
+    scaleZInput.addEventListener('input', (e) => {
         const value = e.target.value
-        app.setAngle(value * (Math.PI / 180))
+        app.setScale({ z: value })
+        app.draw()
+    })
+
+    angleXInput.addEventListener('input', (e) => {
+        const value = e.target.value
+        app.setAngle({ x: value * (Math.PI / 180) })
+        app.draw()
+    })
+
+    angleYInput.addEventListener('input', (e) => {
+        const value = e.target.value
+        app.setAngle({ y: value * (Math.PI / 180) })
+        app.draw()
+    })
+
+    angleZInput.addEventListener('input', (e) => {
+        const value = e.target.value
+        app.setAngle({ y: value * (Math.PI / 180) })
         app.draw()
     })
 }
