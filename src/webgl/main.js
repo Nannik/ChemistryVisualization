@@ -63,7 +63,7 @@ export function main(gl) {
 
     angleZInput.addEventListener('input', (e) => {
         const value = e.target.value
-        app.setAngle({ y: value * (Math.PI / 180) })
+        app.setAngle({ z: value * (Math.PI / 180) })
         app.draw()
     })
 }

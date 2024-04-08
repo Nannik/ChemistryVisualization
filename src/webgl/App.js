@@ -63,7 +63,7 @@ export class App {
 
         let primitiveType = this.gl.TRIANGLES;
         let offset = 0;
-        let count = 16 * 6;
+        let count = 12;
 
         this.gl.drawArrays(primitiveType, offset, count);
         this.ext.getTranslatedShaderSource(this.vertSh)
@@ -88,15 +88,6 @@ export class App {
         matrix = m4.zRotate(matrix, this.angle.z)
         matrix = m4.scale(matrix, this.scale.x, this.scale.y, this.scale.z)
 
-        console.log('%cmatrix', 'color: #bada55')
-        for (let i = 0; i < matrix.length; i += 4) {
-            let row = ''
-            for (let j = i; j < matrix.length && j < i + 4; j++) {
-                row += matrix[j].toFixed(3) + ' '
-            }
-
-            console.log(row)
-        }
         this.gl.uniformMatrix4fv(this.locations.matrix, false, matrix);
     }
 
