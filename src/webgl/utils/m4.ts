@@ -1,16 +1,16 @@
 export const m4 = {
-    translation: function(tx: number, ty: number, tz: number) {
+    translation(tx: number, ty: number, tz: number) {
         return [
-            1,  0,  0,  0,
-            0,  1,  0,  0,
-            0,  0,  1,  0,
+            1, 0, 0, 0,
+            0, 1, 0, 0,
+            0, 0, 1, 0,
             tx, ty, tz, 1,
         ];
     },
 
-    xRotation: function(angleInRadians: number) {
-        let c = Math.cos(angleInRadians);
-        let s = Math.sin(angleInRadians);
+    xRotation(angleInRadians: number) {
+        const c = Math.cos(angleInRadians);
+        const s = Math.sin(angleInRadians);
 
         return [
             1, 0, 0, 0,
@@ -20,9 +20,9 @@ export const m4 = {
         ];
     },
 
-    yRotation: function(angleInRadians: number) {
-        let c = Math.cos(angleInRadians);
-        let s = Math.sin(angleInRadians);
+    yRotation(angleInRadians: number) {
+        const c = Math.cos(angleInRadians);
+        const s = Math.sin(angleInRadians);
 
         return [
             c, 0, -s, 0,
@@ -32,9 +32,9 @@ export const m4 = {
         ];
     },
 
-    zRotation: function(angleInRadians: number) {
-        let c = Math.cos(angleInRadians);
-        let s = Math.sin(angleInRadians);
+    zRotation(angleInRadians: number) {
+        const c = Math.cos(angleInRadians);
+        const s = Math.sin(angleInRadians);
 
         return [
             c, s, 0, 0,
@@ -44,78 +44,78 @@ export const m4 = {
         ];
     },
 
-    scaling: function(sx: number, sy: number, sz: number) {
+    scaling(sx: number, sy: number, sz: number) {
         return [
-            sx, 0,  0,  0,
-            0, sy,  0,  0,
-            0,  0, sz,  0,
-            0,  0,  0,  1,
+            sx, 0, 0, 0,
+            0, sy, 0, 0,
+            0, 0, sz, 0,
+            0, 0, 0, 1,
         ];
     },
 
-    translate: function(m: number[], tx: number, ty: number, tz: number) {
+    translate(m: number[], tx: number, ty: number, tz: number) {
         return this.multiply(m, this.translation(tx, ty, tz));
     },
 
-    xRotate: function(m: number[], angleInRadians: number) {
+    xRotate(m: number[], angleInRadians: number) {
         return this.multiply(m, this.xRotation(angleInRadians));
     },
 
-    yRotate: function(m: number[], angleInRadians: number) {
+    yRotate(m: number[], angleInRadians: number) {
         return this.multiply(m, this.yRotation(angleInRadians));
     },
 
-    zRotate: function(m: number[], angleInRadians: number) {
+    zRotate(m: number[], angleInRadians: number) {
         return this.multiply(m, this.zRotation(angleInRadians));
     },
 
-    scale: function(m: number[], sx: number, sy: number, sz: number) {
+    scale(m: number[], sx: number, sy: number, sz: number) {
         return this.multiply(m, this.scaling(sx, sy, sz));
     },
 
-    identity: function () {
+    identity() {
         return [
             1, 0, 0, 0,
             0, 1, 0, 0,
             0, 0, 1, 0,
-            0, 0, 0, 1
-        ]
+            0, 0, 0, 1,
+        ];
     },
 
-    multiply: function(a: number[], b: number[]) {
+    multiply(a: number[], b: number[]) {
         try {
-            let b00 = b[0 * 4 + 0];
-            let b01 = b[0 * 4 + 1];
-            let b02 = b[0 * 4 + 2];
-            let b03 = b[0 * 4 + 3];
-            let b10 = b[1 * 4 + 0];
-            let b11 = b[1 * 4 + 1];
-            let b12 = b[1 * 4 + 2];
-            let b13 = b[1 * 4 + 3];
-            let b20 = b[2 * 4 + 0];
-            let b21 = b[2 * 4 + 1];
-            let b22 = b[2 * 4 + 2];
-            let b23 = b[2 * 4 + 3];
-            let b30 = b[3 * 4 + 0];
-            let b31 = b[3 * 4 + 1];
-            let b32 = b[3 * 4 + 2];
-            let b33 = b[3 * 4 + 3];
-            let a00 = a[0 * 4 + 0];
-            let a01 = a[0 * 4 + 1];
-            let a02 = a[0 * 4 + 2];
-            let a03 = a[0 * 4 + 3];
-            let a10 = a[1 * 4 + 0];
-            let a11 = a[1 * 4 + 1];
-            let a12 = a[1 * 4 + 2];
-            let a13 = a[1 * 4 + 3];
-            let a20 = a[2 * 4 + 0];
-            let a21 = a[2 * 4 + 1];
-            let a22 = a[2 * 4 + 2];
-            let a23 = a[2 * 4 + 3];
-            let a30 = a[3 * 4 + 0];
-            let a31 = a[3 * 4 + 1];
-            let a32 = a[3 * 4 + 2];
-            let a33 = a[3 * 4 + 3];
+            const b00 = b[0 * 4 + 0];
+            const b01 = b[0 * 4 + 1];
+            const b02 = b[0 * 4 + 2];
+            const b03 = b[0 * 4 + 3];
+            const b10 = b[1 * 4 + 0];
+            const b11 = b[1 * 4 + 1];
+            const b12 = b[1 * 4 + 2];
+            const b13 = b[1 * 4 + 3];
+            const b20 = b[2 * 4 + 0];
+            const b21 = b[2 * 4 + 1];
+            const b22 = b[2 * 4 + 2];
+            const b23 = b[2 * 4 + 3];
+            const b30 = b[3 * 4 + 0];
+            const b31 = b[3 * 4 + 1];
+            const b32 = b[3 * 4 + 2];
+            const b33 = b[3 * 4 + 3];
+            const a00 = a[0 * 4 + 0];
+            const a01 = a[0 * 4 + 1];
+            const a02 = a[0 * 4 + 2];
+            const a03 = a[0 * 4 + 3];
+            const a10 = a[1 * 4 + 0];
+            const a11 = a[1 * 4 + 1];
+            const a12 = a[1 * 4 + 2];
+            const a13 = a[1 * 4 + 3];
+            const a20 = a[2 * 4 + 0];
+            const a21 = a[2 * 4 + 1];
+            const a22 = a[2 * 4 + 2];
+            const a23 = a[2 * 4 + 3];
+            const a30 = a[3 * 4 + 0];
+            const a31 = a[3 * 4 + 1];
+            const a32 = a[3 * 4 + 2];
+            const a33 = a[3 * 4 + 3];
 
             return [
                 b00 * a00 + b01 * a10 + b02 * a20 + b03 * a30,
@@ -136,8 +136,8 @@ export const m4 = {
                 b30 * a03 + b31 * a13 + b32 * a23 + b33 * a33,
             ];
         } catch (e) {
-            console.error(e)
-            return a
+            console.error(e);
+            return a;
         }
     },
 };

@@ -1,8 +1,8 @@
 export function initBuffers(gl: WebGLRenderingContext) {
     return {
         position: initPosBuffer(gl),
-        color: initColorBuffer(gl)
-    }
+        color: initColorBuffer(gl),
+    };
 }
 
 function initPosBuffer(gl: WebGLRenderingContext): WebGLBuffer {
@@ -136,7 +136,7 @@ function initPosBuffer(gl: WebGLRenderingContext): WebGLBuffer {
     //     0, 150,   0
     // ];
 
-    let positions = [
+    const positions = [
         0, 0, 1,
         0, 50, 1,
         50, 50, 1,
@@ -149,21 +149,19 @@ function initPosBuffer(gl: WebGLRenderingContext): WebGLBuffer {
         50, 50, -1,
         0, 0, -1,
         50, 50, -1,
-    ]
+    ];
 
-    let posBuffer = gl.createBuffer()
+    const posBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
 
-    return posBuffer
+    return posBuffer;
 }
 
 function initColorBuffer(gl: WebGLRenderingContext): WebGLBuffer {
-    let colors = new Array(4 * 4).fill(1).map((_, i) => {
-        return (i + 1) % 4 === 0 ? 1 : Math.random()
-    });
+    const colors = new Array(4 * 4).fill(1).map((_, i) => ((i + 1) % 4 === 0 ? 1 : Math.random()));
 
-    let colorBuffer = gl.createBuffer();
+    const colorBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
 

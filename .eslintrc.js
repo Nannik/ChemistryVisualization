@@ -1,0 +1,40 @@
+module.exports = {
+    env: {
+        browser: true,
+        es2021: true,
+    },
+    extends: [
+        'airbnb',
+    ],
+    parser: '@typescript-eslint/parser',
+    parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+    },
+    plugins: [
+        '@typescript-eslint',
+        'unused-imports',
+    ],
+    rules: {
+        indent: [ 2, 4, { SwitchCase: 1 } ],
+        'no-console': [ 'warn', { allow: [ 'warn', 'error' ] } ],
+        '@typescript-eslint/member-delimiter-style': [ 'error', { multiline: { delimiter: 'none' } } ],
+        'max-len': [ 2, { code: 120, ignoreComments: true } ],
+        'no-use-before-define': [ 'error', { functions: false } ],
+        'object-curly-spacing': [ 'error', 'always' ],
+        'array-bracket-spacing': [ 'error', 'always' ],
+        'unused-imports/no-unused-imports': 'error',
+        'no-unused-vars': 'warn',
+        'no-plusplus': 'off',
+        'import/prefer-default-export': 'off',
+        'import/no-unresolved': 'off',
+        'import/extensions': 'off',
+        'import/no-extraneous-dependencies': 'off',
+        'no-underscore-dangle': 'off',
+        'no-shadow': 'off',
+        'no-extra-boolean-cast': 'off',
+        'no-param-reassign': 'off',
+        'no-undef': 'off',
+        'consistent-return': 'off',
+    },
+};

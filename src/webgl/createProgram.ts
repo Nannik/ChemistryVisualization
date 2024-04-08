@@ -1,11 +1,15 @@
-export function createProgram(gl: WebGLRenderingContext, vertexShader: WebGLShader, fragmentShader: WebGLShader): WebGLProgram {
-    let program = gl.createProgram();
+export function createProgram(
+    gl: WebGLRenderingContext,
+    vertexShader: WebGLShader,
+    fragmentShader: WebGLShader,
+): WebGLProgram {
+    const program = gl.createProgram();
 
     gl.attachShader(program, vertexShader);
     gl.attachShader(program, fragmentShader);
     gl.linkProgram(program);
 
-    let success = gl.getProgramParameter(program, gl.LINK_STATUS);
+    const success = gl.getProgramParameter(program, gl.LINK_STATUS);
     if (success) {
         return program;
     }
