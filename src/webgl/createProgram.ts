@@ -1,4 +1,4 @@
-export function createProgram(gl, vertexShader, fragmentShader) {
+export function createProgram(gl: WebGLRenderingContext, vertexShader: WebGLShader, fragmentShader: WebGLShader): WebGLProgram {
     let program = gl.createProgram();
 
     gl.attachShader(program, vertexShader);

@@ -1,12 +1,37 @@
-import {createShader} from "./createShader";
 import vertShGl from "../glsl/vertSh.glsl";
 import fragShGl from "../glsl/fragSh.glsl";
+import {createShader} from "./createShader";
 import {createProgram} from "./createProgram";
 import {initBuffers} from "./initBuffers";
 import {m4} from "./utils/m4";
 
+type AppBuffersType = {
+    position: WebGLBuffer
+    color: WebGLBuffer
+}
+
+type AppLocationsType = {
+    color: GLint
+    position: GLint
+    resolution: WebGLUniformLocation
+    matrix: WebGLUniformLocation
+}
+
 export class App {
-    constructor(gl) {
+    gl: WebGLRenderingContext
+    ext: WEBGL_debug_shaders
+    translation: Vector3
+    scale: Vector3
+    angle: Vector3
+
+    fragSh: WebGLShader
+    vertSh: WebGLShader
+    program: WebGLProgram
+
+    buffers: AppBuffersType
+    locations: AppLocationsType
+
+    constructor(gl: WebGLRenderingContext) {
         this.gl = gl;
 
         this.ext = gl.getExtension("WEBGL_debug_shaders")
@@ -30,9 +55,9 @@ export class App {
         }
 
         this.vertSh = createShader(gl, gl.VERTEX_SHADER, vertShGl);
-        let fragSh = createShader(gl, gl.FRAGMENT_SHADER, fragShGl);
+        this.fragSh = createShader(gl, gl.FRAGMENT_SHADER, fragShGl);
 
-        this.program = createProgram(gl, this.vertSh, fragSh)
+        this.program = createProgram(gl, this.vertSh, this.fragSh)
 
         this.buffers = initBuffers(gl)
 
@@ -69,7 +94,7 @@ export class App {
         this.ext.getTranslatedShaderSource(this.vertSh)
     }
 
-    setAttr(size, attrLoc, buffer) {
+    setAttr(size: number, attrLoc: GLuint, buffer: WebGLBuffer) {
         let type = this.gl.FLOAT;
         let normalize = false;
         let stride = 0;
@@ -91,27 +116,27 @@ export class App {
         this.gl.uniformMatrix4fv(this.locations.matrix, false, matrix);
     }
 
-    setTranslation({x, y, z}) {
+    setTranslation(v3: Optional<Vector3>) {
         this.translation = {
-            x: x ?? this.translation.x,
-            y: y ?? this.translation.y,
-            z: z ?? this.translation.z
+            x: v3.x ?? this.translation.x,
+            y: v3.y ?? this.translation.y,
+            z: v3.z ?? this.translation.z
         }
     }
 
-    setScale({x, y, z}) {
+    setScale(v3: Optional<Vector3>) {
         this.scale = {
-            x: x ?? this.scale.x,
-            y: y ?? this.scale.y,
-            z: z ?? this.scale.z
+            x: v3.x ?? this.scale.x,
+            y: v3.y ?? this.scale.y,
+            z: v3.z ?? this.scale.z
         }
     }
 
-    setAngle({x, y, z}) {
+    setAngle(v3: Optional<Vector3>) {
         this.angle = {
-            x: x ?? this.angle.x,
-            y: y ?? this.angle.y,
-            z: z ?? this.angle.z
+            x: v3.x ?? this.angle.x,
+            y: v3.y ?? this.angle.y,
+            z: v3.z ?? this.angle.z
         }
     }
 }

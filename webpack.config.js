@@ -5,7 +5,7 @@ module.exports = () => {
 
     return {
         mode: 'development',
-        entry: './src/index.js',
+        entry: './src/index.ts',
         output: {
             path: path.resolve(__dirname, 'dist'),
             filename: 'main.js',
@@ -26,8 +26,15 @@ module.exports = () => {
                 {
                     test: /\.glsl$/,
                     loader: 'raw-loader'
+                },
+                {
+                    test: /\.ts$/,
+                    loader: 'ts-loader'
                 }
             ]
+        },
+        resolve: {
+            extensions: ['.tsx', '.ts', '.js'],
         },
         plugins: [new HtmlWebpackPlugin({ template: './public/index.html' })],
         devServer: {

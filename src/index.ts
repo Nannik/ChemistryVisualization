@@ -2,23 +2,21 @@ import { main } from "./webgl/main";
 
 import './style.scss'
 
-let gl
-
 window.onload = () => {
-    let canvas = document.getElementById("glcanvas");
+    let canvas = document.getElementById("glcanvas") as HTMLCanvasElement;
 
-    gl = initWebGL(canvas);
+    let gl = initWebGL(canvas);
 
     if (gl) {
         main(gl)
     }
 }
 
-function initWebGL(canvas) {
-    gl = null;
+function initWebGL(canvas: HTMLCanvasElement): WebGLRenderingContext {
+    let gl = null;
 
     try {
-        gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+        gl = canvas.getContext("webgl");
     } catch (e) {}
 
     if (!gl) {

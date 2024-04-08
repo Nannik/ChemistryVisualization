@@ -1,11 +1,11 @@
-export function initBuffers(gl) {
+export function initBuffers(gl: WebGLRenderingContext) {
     return {
         position: initPosBuffer(gl),
         color: initColorBuffer(gl)
     }
 }
 
-function initPosBuffer(gl) {
+function initPosBuffer(gl: WebGLRenderingContext): WebGLBuffer {
     // let positions = [
     //     // left column front
     //     0,   0,  0,
@@ -158,7 +158,7 @@ function initPosBuffer(gl) {
     return posBuffer
 }
 
-function initColorBuffer(gl) {
+function initColorBuffer(gl: WebGLRenderingContext): WebGLBuffer {
     let colors = new Array(4 * 4).fill(1).map((_, i) => {
         return (i + 1) % 4 === 0 ? 1 : Math.random()
     });
