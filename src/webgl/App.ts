@@ -42,6 +42,7 @@ export class App {
 
     constructor(gl: WebGLRenderingContext) {
         this.gl = gl;
+        // this.gl.enable(this.gl.CULL_FACE);
 
         this.ext = gl.getExtension('WEBGL_debug_shaders');
 
@@ -115,7 +116,13 @@ export class App {
     }
 
     setMatrix() {
-        let matrix = m4.identity();
+        const fieldOfViewRad = 30 * (Math.PI / 180);
+        const aspect = this.gl.canvas.width / this.gl.canvas.height;
+        const zNear = 0;
+        const zFar = 2000;
+
+        let matrix = m4.perspective(fieldOfViewRad, aspect, zNear, zFar);
+        // matrix = m4.multiply(matrix, m4.projection(this.gl.canvas.width, this.gl.canvas.height, 400));
         matrix = m4.translate(matrix, this.translation.x, this.translation.y, this.translation.z);
         matrix = m4.xRotate(matrix, this.angle.x);
         matrix = m4.yRotate(matrix, this.angle.y);
