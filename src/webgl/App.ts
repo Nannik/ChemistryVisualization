@@ -4,7 +4,7 @@ import { createShader } from './createShader';
 import { createProgram } from './createProgram';
 import { initBuffers } from './initBuffers';
 import { m4 } from './utils/m4';
-import { Vector3 } from './types';
+import Vector3 from './utils/vector3';
 
 type AppBuffersType = {
     position: WebGLBuffer
@@ -24,11 +24,7 @@ export class App {
     // eslint-disable-next-line camelcase
     ext: WEBGL_debug_shaders;
 
-    translation: Vector3;
-
-    scale: Vector3;
-
-    angle: Vector3;
+    angle: number;
 
     fragSh: WebGLShader;
 
@@ -42,27 +38,11 @@ export class App {
 
     constructor(gl: WebGLRenderingContext) {
         this.gl = gl;
-        // this.gl.enable(this.gl.CULL_FACE);
 
-        this.ext = gl.getExtension('WEBGL_debug_shaders');
+        this.gl.enable(this.gl.CULL_FACE);
+        this.gl.enable(this.gl.DEPTH_TEST);
 
-        this.translation = {
-            x: 0,
-            y: 0,
-            z: 0,
-        };
-
-        this.scale = {
-            x: 1,
-            y: 1,
-            z: 1,
-        };
-
-        this.angle = {
-            x: 0,
-            y: 0,
-            z: 0,
-        };
+        this.angle = 0;
 
         this.vertSh = createShader(gl, gl.VERTEX_SHADER, vertShGl);
         this.fragSh = createShader(gl, gl.FRAGMENT_SHADER, fragShGl);
@@ -82,31 +62,41 @@ export class App {
     }
 
     draw() {
-        this.gl.useProgram(this.program);
+        this.ext = this.gl.getExtension('WEBGL_debug_shaders');
 
         this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
 
-        this.gl.clearColor(0, 0, 0, 0);
-        this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+        // this.gl.clearColor(0, 0, 0, 0);
+        this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
-        this.gl.uniform2f(this.locations.resolution, this.gl.canvas.width, this.gl.canvas.height);
+        this.gl.useProgram(this.program);
 
-        this.setAttr(3, this.locations.position, this.buffers.position);
-        this.setAttr(4, this.locations.color, this.buffers.color);
+        this.setAttr(3, this.gl.FLOAT, false, this.locations.position, this.buffers.position);
+        this.setAttr(3, this.gl.UNSIGNED_BYTE, true, this.locations.color, this.buffers.color);
 
-        this.setMatrix();
-
-        const primitiveType = this.gl.TRIANGLES;
-        const offset = 0;
-        const count = 12;
-
-        this.gl.drawArrays(primitiveType, offset, count);
-        this.ext.getTranslatedShaderSource(this.vertSh);
+        const radius = 200;
+        const viewProjectionMatrix = this.getViewProjectionMatrix(radius);
+        this.drawElements(5, radius, viewProjectionMatrix);
     }
 
-    setAttr(size: number, attrLoc: GLuint, buffer: WebGLBuffer) {
-        const type = this.gl.FLOAT;
-        const normalize = false;
+    drawElements(countElements: number, radius: number, viewProjectionMatrix: number[]) {
+        for (let i = 0; i < countElements; i++) {
+            const angle = (i * Math.PI * 2) / countElements;
+            const x = Math.cos(angle) * radius;
+            const y = Math.sin(angle) * radius;
+
+            const matrix = m4.translate(viewProjectionMatrix, x, 0, y);
+            this.gl.uniformMatrix4fv(this.locations.matrix, false, matrix);
+
+            const primitiveType = this.gl.TRIANGLES;
+            const offset = 0;
+            const count = 16 * 6;
+
+            this.gl.drawArrays(primitiveType, offset, count);
+        }
+    }
+
+    setAttr(size: number, type: GLenum, normalize: boolean, attrLoc: GLuint, buffer: WebGLBuffer) {
         const stride = 0;
         const offset = 0;
 
@@ -115,44 +105,25 @@ export class App {
         this.gl.enableVertexAttribArray(attrLoc);
     }
 
-    setMatrix() {
-        const fieldOfViewRad = 30 * (Math.PI / 180);
+    getViewProjectionMatrix(radius: number) {
+        let cameraPositionMatrix = m4.yRotation(this.angle);
+        cameraPositionMatrix = m4.translate(cameraPositionMatrix, 0, 0, radius * 1.5);
+
+        const cameraMatrix = m4.lookAt(
+            new Vector3(cameraPositionMatrix[12], cameraPositionMatrix[13], cameraPositionMatrix[14]),
+            new Vector3(radius, 0, 0),
+            new Vector3(0, 1, 0),
+        );
+        const viewMatrix = m4.inverse(cameraMatrix);
+
+        const fieldOfViewRad = 150 * (Math.PI / 180);
         const aspect = this.gl.canvas.width / this.gl.canvas.height;
-        const zNear = 0;
+        const zNear = 1;
         const zFar = 2000;
-
-        let matrix = m4.perspective(fieldOfViewRad, aspect, zNear, zFar);
-        // matrix = m4.multiply(matrix, m4.projection(this.gl.canvas.width, this.gl.canvas.height, 400));
-        matrix = m4.translate(matrix, this.translation.x, this.translation.y, this.translation.z);
-        matrix = m4.xRotate(matrix, this.angle.x);
-        matrix = m4.yRotate(matrix, this.angle.y);
-        matrix = m4.zRotate(matrix, this.angle.z);
-        matrix = m4.scale(matrix, this.scale.x, this.scale.y, this.scale.z);
-
-        this.gl.uniformMatrix4fv(this.locations.matrix, false, matrix);
+        return m4.multiply(m4.perspective(fieldOfViewRad, aspect, zNear, zFar), viewMatrix);
     }
 
-    setTranslation(v3: Optional<Vector3>) {
-        this.translation = {
-            x: v3.x ?? this.translation.x,
-            y: v3.y ?? this.translation.y,
-            z: v3.z ?? this.translation.z,
-        };
-    }
-
-    setScale(v3: Optional<Vector3>) {
-        this.scale = {
-            x: v3.x ?? this.scale.x,
-            y: v3.y ?? this.scale.y,
-            z: v3.z ?? this.scale.z,
-        };
-    }
-
-    setAngle(v3: Optional<Vector3>) {
-        this.angle = {
-            x: v3.x ?? this.angle.x,
-            y: v3.y ?? this.angle.y,
-            z: v3.z ?? this.angle.z,
-        };
+    setAngle(angle: number) {
+        this.angle = (angle * Math.PI) / 360;
     }
 }

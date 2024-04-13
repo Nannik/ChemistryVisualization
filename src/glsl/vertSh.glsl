@@ -1,7 +1,6 @@
 attribute vec3 a_position;
 attribute vec4 a_color;
 
-uniform vec2 u_resolution;
 uniform mat4 u_matrix;
 
 varying lowp vec4 v_color;
