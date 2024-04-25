@@ -1,17 +1,19 @@
 import vertShGl from '../glsl/vertSh.glsl';
 import fragShGl from '../glsl/fragSh.glsl';
-import { createShader } from './createShader';
-import { createProgram } from './createProgram';
-import { initBuffers } from './initBuffers';
+import cubeObj from '../assets/cube/cube.obj';
+import cubeMtl from '../assets/cube/cube.mtl';
+
 import { m4 } from './utils/m4';
 import Vector3 from './utils/vector3';
+import Scene from './Scene';
+import WebGLObject from '../objects/WebGLObject';
+import Camera from './Camera';
+import ObjParser from '../shared/objectParser/ObjParser';
+import MtlParser from '../shared/objectParser/MtlParser';
 
-type AppBuffersType = {
-    position: WebGLBuffer
-    color: WebGLBuffer
-}
+type WebGLShaderType = WebGLRenderingContext['VERTEX_SHADER'] | WebGLRenderingContext['FRAGMENT_SHADER']
 
-type AppLocationsType = {
+export type AppLocations = {
     color: GLint
     position: GLint
     resolution: WebGLUniformLocation
@@ -19,22 +21,17 @@ type AppLocationsType = {
 }
 
 export class App {
-    gl: WebGLRenderingContext;
+    private readonly gl: WebGLRenderingContext;
 
-    // eslint-disable-next-line camelcase
-    ext: WEBGL_debug_shaders;
+    private readonly program: WebGLProgram;
 
-    angle: number;
+    private readonly scene: Scene;
 
-    fragSh: WebGLShader;
+    private camera: Camera;
 
-    vertSh: WebGLShader;
+    private readonly radius: number;
 
-    program: WebGLProgram;
-
-    buffers: AppBuffersType;
-
-    locations: AppLocationsType;
+    private objects: WebGLObject[] = [];
 
     constructor(gl: WebGLRenderingContext) {
         this.gl = gl;
@@ -42,88 +39,115 @@ export class App {
         this.gl.enable(this.gl.CULL_FACE);
         this.gl.enable(this.gl.DEPTH_TEST);
 
-        this.angle = 0;
+        this.radius = 200;
 
-        this.vertSh = createShader(gl, gl.VERTEX_SHADER, vertShGl);
-        this.fragSh = createShader(gl, gl.FRAGMENT_SHADER, fragShGl);
+        const vertSh = this.createShader(gl.VERTEX_SHADER, vertShGl);
+        const fragSh = this.createShader(gl.FRAGMENT_SHADER, fragShGl);
 
-        this.program = createProgram(gl, this.vertSh, this.fragSh);
+        this.program = this.createProgram(vertSh, fragSh);
 
-        this.buffers = initBuffers(gl);
-
-        this.locations = {
+        const locations: AppLocations = {
             color: gl.getAttribLocation(this.program, 'a_color'),
             position: gl.getAttribLocation(this.program, 'a_position'),
             resolution: gl.getUniformLocation(this.program, 'u_resolution'),
             matrix: gl.getUniformLocation(this.program, 'u_matrix'),
         };
 
+        this.scene = new Scene(gl, locations);
+        this.initObjects();
+        this.initCamera();
+
         this.draw();
     }
 
-    draw() {
-        this.ext = this.gl.getExtension('WEBGL_debug_shaders');
+    private createShader(type: WebGLShaderType, source: string): WebGLShader {
+        const shader = this.gl.createShader(type);
+        this.gl.shaderSource(shader, source);
+        this.gl.compileShader(shader);
 
+        const success = this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS);
+        if (success) {
+            return shader;
+        }
+
+        console.error(this.gl.getShaderInfoLog(shader));
+        this.gl.deleteShader(shader);
+    }
+
+    private createProgram(vertexShader: WebGLShader, fragmentShader: WebGLShader): WebGLProgram {
+        const program = this.gl.createProgram();
+
+        this.gl.attachShader(program, vertexShader);
+        this.gl.attachShader(program, fragmentShader);
+        this.gl.linkProgram(program);
+
+        const success = this.gl.getProgramParameter(program, this.gl.LINK_STATUS);
+        if (success) {
+            return program;
+        }
+
+        console.error(this.gl.getProgramInfoLog(program));
+        this.gl.deleteProgram(program);
+    }
+
+    private initObjects() {
+        const count = 5;
+
+        const mtlParser = new MtlParser(cubeMtl);
+        mtlParser.parse();
+
+        const objParser = new ObjParser(cubeObj, mtlParser.materials);
+        objParser.parse();
+
+        console.log(objParser.getVertexes().map((vector) => [ vector.x, vector.y, vector.z ]).flat());
+        console.log(objParser.getColors());
+
+        for (let i = 0; i < count; i++) {
+            const angle = (i * Math.PI * 2) / count;
+            const x = Math.cos(angle) * this.radius;
+            const y = Math.sin(angle) * this.radius;
+
+            const obj = new WebGLObject(
+                this.scene,
+                objParser.getVertexes().map((vector) => [ vector.x, vector.y, vector.z ]).flat(),
+                objParser.getColors(),
+            );
+            obj.position = new Vector3(x, y, obj.position.z);
+            obj.scale = new Vector3(10, 10, 10);
+
+            this.objects.push(obj);
+        }
+    }
+
+    private initCamera() {
+        this.camera = new Camera(
+            this.getCameraPosition(0),
+            new Vector3(0, 0, 0),
+            (150 * Math.PI) / 180, // 150 degree
+            this.gl.canvas.width / this.gl.canvas.height,
+            1,
+            2000,
+        );
+    }
+
+    getCameraPosition(angle: number) {
+        let cameraPositionMatrix = m4.yRotation(angle);
+        cameraPositionMatrix = m4.translate(cameraPositionMatrix, 0, 0, this.radius * 1.2);
+
+        return new Vector3(cameraPositionMatrix[12], cameraPositionMatrix[13], cameraPositionMatrix[14]);
+    }
+
+    draw() {
         this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
 
-        // this.gl.clearColor(0, 0, 0, 0);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
         this.gl.useProgram(this.program);
 
-        this.setAttr(3, this.gl.FLOAT, false, this.locations.position, this.buffers.position);
-        this.setAttr(3, this.gl.UNSIGNED_BYTE, true, this.locations.color, this.buffers.color);
-
-        const radius = 200;
-        const viewProjectionMatrix = this.getViewProjectionMatrix(radius);
-        this.drawElements(5, radius, viewProjectionMatrix);
-    }
-
-    drawElements(countElements: number, radius: number, viewProjectionMatrix: number[]) {
-        for (let i = 0; i < countElements; i++) {
-            const angle = (i * Math.PI * 2) / countElements;
-            const x = Math.cos(angle) * radius;
-            const y = Math.sin(angle) * radius;
-
-            const matrix = m4.translate(viewProjectionMatrix, x, 0, y);
-            this.gl.uniformMatrix4fv(this.locations.matrix, false, matrix);
-
-            const primitiveType = this.gl.TRIANGLES;
-            const offset = 0;
-            const count = 16 * 6;
-
-            this.gl.drawArrays(primitiveType, offset, count);
-        }
-    }
-
-    setAttr(size: number, type: GLenum, normalize: boolean, attrLoc: GLuint, buffer: WebGLBuffer) {
-        const stride = 0;
-        const offset = 0;
-
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer);
-        this.gl.vertexAttribPointer(attrLoc, size, type, normalize, stride, offset);
-        this.gl.enableVertexAttribArray(attrLoc);
-    }
-
-    getViewProjectionMatrix(radius: number) {
-        let cameraPositionMatrix = m4.yRotation(this.angle);
-        cameraPositionMatrix = m4.translate(cameraPositionMatrix, 0, 0, radius * 1.5);
-
-        const cameraMatrix = m4.lookAt(
-            new Vector3(cameraPositionMatrix[12], cameraPositionMatrix[13], cameraPositionMatrix[14]),
-            new Vector3(radius, 0, 0),
-            new Vector3(0, 1, 0),
-        );
-        const viewMatrix = m4.inverse(cameraMatrix);
-
-        const fieldOfViewRad = 150 * (Math.PI / 180);
-        const aspect = this.gl.canvas.width / this.gl.canvas.height;
-        const zNear = 1;
-        const zFar = 2000;
-        return m4.multiply(m4.perspective(fieldOfViewRad, aspect, zNear, zFar), viewMatrix);
+        this.objects.forEach((obj) => obj.draw(this.camera.viewProjectionMatrix));
     }
 
     setAngle(angle: number) {
-        this.angle = (angle * Math.PI) / 360;
+        this.camera.position = this.getCameraPosition((angle * Math.PI) / 360);
     }
 }

@@ -6,6 +6,8 @@ export default class Vector3 {
     private readonly _z: number;
 
     constructor(x: number, y: number, z: number) {
+        if (Number.isNaN(x) || Number.isNaN(y) || Number.isNaN(z)) throw new Error('NaN coordinate is not valid');
+
         this._x = x;
         this._y = y;
         this._z = z;

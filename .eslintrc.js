@@ -16,9 +16,11 @@ module.exports = {
         'unused-imports',
     ],
     rules: {
+        radix: 'off',
         indent: [ 2, 4, { SwitchCase: 1 } ],
         'no-console': [ 'warn', { allow: [ 'warn', 'error' ] } ],
         '@typescript-eslint/member-delimiter-style': [ 'error', { multiline: { delimiter: 'none' } } ],
+        'max-lines-per-function': [ 'error', { max: 30, skipBlankLines: true } ],
         'max-len': [ 2, { code: 120, ignoreComments: true } ],
         'no-use-before-define': [ 'error', { functions: false } ],
         'object-curly-spacing': [ 'error', 'always' ],
@@ -38,5 +40,7 @@ module.exports = {
         'consistent-return': 'off',
         'no-bitwise': 'off',
         'prefer-destructuring': 'off',
+        'no-return-await': 'off',
+        'no-continue': 'off',
     },
 };
