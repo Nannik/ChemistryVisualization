@@ -116,6 +116,7 @@ export const m4 = {
         return dst;
     },
 
+    // eslint-disable-next-line max-lines-per-function
     multiply(a: number[], b: number[]) {
         try {
             const b00 = b[0 * 4 + 0];
@@ -175,6 +176,7 @@ export const m4 = {
         }
     },
 
+    // eslint-disable-next-line max-lines-per-function
     inverse(m: number[]) {
         const m00 = m[0 * 4 + 0];
         const m01 = m[0 * 4 + 1];

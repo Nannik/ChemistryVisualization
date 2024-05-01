@@ -33,6 +33,13 @@ module.exports = () => ({
     },
     resolve: {
         extensions: [ '.ts', '.js' ],
+        alias: {
+            '@': path.resolve(__dirname, 'src/'),
+            '@webgl': path.resolve(__dirname, 'src/webgl/'),
+            '@glsl': path.resolve(__dirname, 'src/glsl/'),
+            '@shared': path.resolve(__dirname, 'src/shared/'),
+            '@assets': path.resolve(__dirname, 'src/assets'),
+        },
     },
     plugins: [ new HtmlWebpackPlugin({ template: './public/index.html' }) ],
     devServer: {

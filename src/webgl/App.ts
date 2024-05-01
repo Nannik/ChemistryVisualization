@@ -1,31 +1,25 @@
-import vertShGl from '../glsl/vertSh.glsl';
-import fragShGl from '../glsl/fragSh.glsl';
-import cubeObj from '../assets/cube/cube.obj';
-import cubeMtl from '../assets/cube/cube.mtl';
+import cubeObj from '@assets/cube/cube.obj';
+import cubeMtl from '@assets/cube/cube.mtl';
 
 import { m4 } from './utils/m4';
 import Vector3 from './utils/vector3';
-import Scene from './Scene';
-import WebGLObject from '../objects/WebGLObject';
+import WebGLObject from './objects/WebGLObject';
 import Camera from './Camera';
 import ObjParser from '../shared/objectParser/ObjParser';
 import MtlParser from '../shared/objectParser/MtlParser';
-
-type WebGLShaderType = WebGLRenderingContext['VERTEX_SHADER'] | WebGLRenderingContext['FRAGMENT_SHADER']
-
-export type AppLocations = {
-    color: GLint
-    position: GLint
-    resolution: WebGLUniformLocation
-    matrix: WebGLUniformLocation
-}
+import { CanvasProgram } from './program/CanvasProgram';
+import { PickProgram } from './program/PickProgram';
+import CanvasMouse from './CanvasMouse';
+import { Program } from './program/Program';
 
 export class App {
     private readonly gl: WebGLRenderingContext;
 
-    private readonly program: WebGLProgram;
+    private readonly canvasProgram: CanvasProgram;
 
-    private readonly scene: Scene;
+    private readonly pickProgram: PickProgram;
+
+    private readonly mouse: CanvasMouse;
 
     private camera: Camera;
 
@@ -33,61 +27,43 @@ export class App {
 
     private objects: WebGLObject[] = [];
 
-    constructor(gl: WebGLRenderingContext) {
+    private readonly pickFramebuffer: WebGLFramebuffer;
+
+    private readonly pickTexture: WebGLTexture;
+
+    private readonly depthBuffer: WebGLRenderbuffer;
+
+    constructor(gl: WebGLRenderingContext, mouse: CanvasMouse) {
         this.gl = gl;
+        this.mouse = mouse;
 
         this.gl.enable(this.gl.CULL_FACE);
         this.gl.enable(this.gl.DEPTH_TEST);
 
         this.radius = 200;
 
-        const vertSh = this.createShader(gl.VERTEX_SHADER, vertShGl);
-        const fragSh = this.createShader(gl.FRAGMENT_SHADER, fragShGl);
+        this.canvasProgram = new CanvasProgram(this.gl);
+        this.pickProgram = new PickProgram(this.gl);
 
-        this.program = this.createProgram(vertSh, fragSh);
-
-        const locations: AppLocations = {
-            color: gl.getAttribLocation(this.program, 'a_color'),
-            position: gl.getAttribLocation(this.program, 'a_position'),
-            resolution: gl.getUniformLocation(this.program, 'u_resolution'),
-            matrix: gl.getUniformLocation(this.program, 'u_matrix'),
-        };
-
-        this.scene = new Scene(gl, locations);
         this.initObjects();
         this.initCamera();
 
-        this.draw();
-    }
+        this.pickTexture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, this.pickTexture);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
-    private createShader(type: WebGLShaderType, source: string): WebGLShader {
-        const shader = this.gl.createShader(type);
-        this.gl.shaderSource(shader, source);
-        this.gl.compileShader(shader);
+        this.depthBuffer = gl.createRenderbuffer();
+        gl.bindRenderbuffer(gl.RENDERBUFFER, this.depthBuffer);
 
-        const success = this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS);
-        if (success) {
-            return shader;
-        }
+        this.pickFramebuffer = gl.createFramebuffer();
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this.pickFramebuffer);
 
-        console.error(this.gl.getShaderInfoLog(shader));
-        this.gl.deleteShader(shader);
-    }
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.pickTexture, 0);
+        gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, this.depthBuffer);
 
-    private createProgram(vertexShader: WebGLShader, fragmentShader: WebGLShader): WebGLProgram {
-        const program = this.gl.createProgram();
-
-        this.gl.attachShader(program, vertexShader);
-        this.gl.attachShader(program, fragmentShader);
-        this.gl.linkProgram(program);
-
-        const success = this.gl.getProgramParameter(program, this.gl.LINK_STATUS);
-        if (success) {
-            return program;
-        }
-
-        console.error(this.gl.getProgramInfoLog(program));
-        this.gl.deleteProgram(program);
+        requestAnimationFrame(this.drawScene.bind(this));
     }
 
     private initObjects() {
@@ -99,20 +75,17 @@ export class App {
         const objParser = new ObjParser(cubeObj, mtlParser.materials);
         objParser.parse();
 
-        console.log(objParser.getVertexes().map((vector) => [ vector.x, vector.y, vector.z ]).flat());
-        console.log(objParser.getColors());
-
         for (let i = 0; i < count; i++) {
             const angle = (i * Math.PI * 2) / count;
             const x = Math.cos(angle) * this.radius;
-            const y = Math.sin(angle) * this.radius;
+            const z = Math.sin(angle) * this.radius;
 
             const obj = new WebGLObject(
-                this.scene,
+                i + 1,
                 objParser.getVertexes().map((vector) => [ vector.x, vector.y, vector.z ]).flat(),
                 objParser.getColors(),
             );
-            obj.position = new Vector3(x, y, obj.position.z);
+            obj.position = new Vector3(x, obj.position.y, z);
             obj.scale = new Vector3(10, 10, 10);
 
             this.objects.push(obj);
@@ -132,19 +105,98 @@ export class App {
 
     getCameraPosition(angle: number) {
         let cameraPositionMatrix = m4.yRotation(angle);
-        cameraPositionMatrix = m4.translate(cameraPositionMatrix, 0, 0, this.radius * 1.2);
+        cameraPositionMatrix = m4.translate(
+            cameraPositionMatrix,
+            0,
+            Math.sin(angle * 2) * 20,
+            this.radius * 1.2,
+        );
 
         return new Vector3(cameraPositionMatrix[12], cameraPositionMatrix[13], cameraPositionMatrix[14]);
     }
 
-    draw() {
+    setFramebufferAttachmentSizes(width: number, height: number) {
+        this.gl.bindTexture(this.gl.TEXTURE_2D, this.pickTexture);
+        // define size and format of level 0
+        const level = 0;
+        const internalFormat = this.gl.RGBA;
+        const border = 0;
+        const format = this.gl.RGBA;
+        const type = this.gl.UNSIGNED_BYTE;
+        const data: any = null;
+        this.gl.texImage2D(
+            this.gl.TEXTURE_2D,
+            level,
+            internalFormat,
+            width,
+            height,
+            border,
+            format,
+            type,
+            data,
+        );
+
+        this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, this.depthBuffer);
+        this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.DEPTH_COMPONENT16, width, height);
+    }
+
+    drawScene() {
         this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
+        this.setFramebufferAttachmentSizes(this.gl.canvas.width, this.gl.canvas.height);
 
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
-        this.gl.useProgram(this.program);
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.pickFramebuffer);
+        this.drawObjects(this.objects, this.pickProgram);
 
-        this.objects.forEach((obj) => obj.draw(this.camera.viewProjectionMatrix));
+        const { x, y } = this.mouse.toLocalCoordinates();
+        const data = new Uint8Array(4);
+        this.gl.readPixels(
+            x,
+            y,
+            1,
+            1,
+            this.gl.RGBA,
+            this.gl.UNSIGNED_BYTE,
+            data,
+        );
+        const id = data[0] + (data[1] << 8) + (data[2] << 16) + (data[3] << 24);
+
+        this.objects.forEach((obj) => {
+            if (obj.id === id) obj.scale = new Vector3(15, 15, 15);
+            else obj.scale = new Vector3(10, 10, 10);
+        });
+
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+        this.drawObjects(this.objects, this.canvasProgram);
+
+        requestAnimationFrame(this.drawScene.bind(this));
+    }
+
+    drawObjects(objects: WebGLObject[], program: Program) {
+        program.use();
+
+        objects.forEach((obj) => this.drawObject(obj, program));
+    }
+
+    drawObject(object: WebGLObject, program: Program) {
+        program.setUniforms({
+            u_matrix: object.calculateMatrix(this.camera.viewProjectionMatrix),
+            u_id: [
+                ((object.id >> 0) & 0xFF) / 0xFF,
+                ((object.id >> 8) & 0xFF) / 0xFF,
+                ((object.id >> 16) & 0xFF) / 0xFF,
+                ((object.id >> 24) & 0xFF) / 0xFF,
+            ],
+        });
+
+        program.setAttributes({
+            a_position: object.vertexes,
+            a_color: object.colors,
+        });
+
+        const mode = this.gl.TRIANGLES;
+        this.gl.drawArrays(mode, 0, object.vertexCount);
     }
 
     setAngle(angle: number) {
